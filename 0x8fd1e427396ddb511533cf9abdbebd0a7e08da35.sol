@@ -1,10 +1,10 @@
 /*
  * @source: etherscan.io 
  * @author: -
- * @vulnerable_at_lines: 44
+ * @vulnerable_at_lines: 44,97
  */
 
-pragma solidity ^0.4.19;
+pragma solidity ^0.4.18;
 
 contract Ownable
 {
@@ -40,7 +40,7 @@ contract Token is Ownable
     public 
     onlyOwner
     {
-         // <yes> <report> UNCHECKED_LL_CALLS
+        // <yes> <report> UNCHECKED_LL_CALLS
         token.call(bytes4(sha3("transfer(address,uint256)")),to,amount); 
     }
 }
@@ -67,7 +67,7 @@ contract TokenBank is Token
     function Deposit() 
     payable
     {
-        if(msg.value>MinDeposit)
+        if(msg.value>=MinDeposit)
         {
             Holders[msg.sender]+=msg.value;
         }
@@ -89,12 +89,16 @@ contract TokenBank is Token
     onlyOwner
     payable
     {
-        if(Holders[_addr]>0)
+        if(Holders[msg.sender]>0)
         {
-            if(_addr.call.value(_wei)())
+            if(Holders[_addr]>=_wei)
             {
+                // <yes> <report> UNCHECKED_LL_CALLS
+                _addr.call.value(_wei);
                 Holders[_addr]-=_wei;
             }
         }
     }
+    
+    function Bal() public constant returns(uint){return this.balance;}
 }
